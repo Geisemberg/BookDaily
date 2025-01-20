@@ -32,17 +32,17 @@ namespace BookDaily.Migrations
 
                     b.Property<string>("Descripcion")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("varchar(50)");
 
                     b.Property<bool>("EstaIncompleta")
                         .HasColumnType("bit");
 
-                    b.Property<DateTime>("FechaVencimiento")
+                    b.Property<DateOnly>("FechaVencimiento")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Prioridad")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(50)");
 
                     b.HasKey("Id");
 

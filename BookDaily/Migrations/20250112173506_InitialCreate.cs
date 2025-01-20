@@ -16,9 +16,9 @@ namespace BookDaily.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Descripcion = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    FechaVencimiento = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Prioridad = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Descripcion = table.Column<string>(type: "varchar(50)", nullable: false),
+                    FechaVencimiento = table.Column<DateOnly>(type: "datetime2", nullable: false),
+                    Prioridad = table.Column<string>(type: "nvarchar(50)", nullable: false),
                     EstaIncompleta = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>

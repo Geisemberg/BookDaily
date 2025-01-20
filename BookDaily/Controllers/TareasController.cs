@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using BookDaily.Models;
 
 namespace BookDaily.Controllers
 {
-    public class TareasController : Controller
+    [Route("api/[controller]")]
+    [ApiController]
+    public class TareasController : ControllerBase
     {
         private readonly BookDailyDbContext _context;
 
@@ -18,134 +19,92 @@ namespace BookDaily.Controllers
             _context = context;
         }
 
-        // GET: Tareas
-        public async Task<IActionResult> Index()
+        // GET: api/Tareas
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Tarea>>> GetTareas()
         {
-            return View(await _context.Tareas.ToListAsync());
+            try
+            {
+                return await _context.Tareas.ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                // Log the exception (you can use a logging framework like Serilog, NLog, etc.)
+                // For now, we'll just return a generic error message
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
         }
 
-        // GET: Tareas/Details/5
-        public async Task<IActionResult> Details(int? id)
+        // GET: api/Tareas/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Tarea>> GetTarea(int id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var tarea = await _context.Tareas
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (tarea == null)
-            {
-                return NotFound();
-            }
-
-            return View(tarea);
-        }
-
-        // GET: Tareas/Create
-        public IActionResult Create()
-        {
-            return View();
-        }
-
-        // POST: Tareas/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Descripcion,FechaVencimiento,Prioridad,EstaIncompleta")] Tarea tarea)
-        {
-            if (ModelState.IsValid)
-            {
-                _context.Add(tarea);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            return View(tarea);
-        }
-
-        // GET: Tareas/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
             var tarea = await _context.Tareas.FindAsync(id);
+
             if (tarea == null)
             {
                 return NotFound();
             }
-            return View(tarea);
+
+            return tarea;
         }
 
-        // POST: Tareas/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // POST: api/Tareas
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Descripcion,FechaVencimiento,Prioridad,EstaIncompleta")] Tarea tarea)
+        public async Task<ActionResult<Tarea>> PostTarea([FromBody] Tarea tarea)
+        {
+            if (tarea == null)
+            {
+                return BadRequest("Tarea no puede ser nula.");
+            }
+
+            _context.Tareas.Add(tarea);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(GetTarea), new { id = tarea.Id }, tarea);
+        }
+
+        // PUT: api/Tareas/5
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutTarea(int id, [FromBody] Tarea tarea)
         {
             if (id != tarea.Id)
             {
-                return NotFound();
+                return BadRequest("El ID de la tarea no coincide.");
             }
 
-            if (ModelState.IsValid)
+            _context.Entry(tarea).State = EntityState.Modified;
+
+            try
             {
-                try
-                {
-                    _context.Update(tarea);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!TareaExists(tarea.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
+                await _context.SaveChangesAsync();
             }
-            return View(tarea);
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!TareaExists(id))
+                {
+                    return NotFound();
+                }
+                throw; // Re-lanzar la excepción para que sea manejada por el middleware
+            }
+
+            return NoContent();
         }
 
-        // GET: Tareas/Delete/5
-        public async Task<IActionResult> Delete(int? id)
+        // DELETE: api/Tareas/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteTarea(int id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var tarea = await _context.Tareas
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var tarea = await _context.Tareas.FindAsync(id);
             if (tarea == null)
             {
                 return NotFound();
             }
 
-            return View(tarea);
-        }
-
-        // POST: Tareas/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var tarea = await _context.Tareas.FindAsync(id);
-            if (tarea != null)
-            {
-                _context.Tareas.Remove(tarea);
-            }
-
+            _context.Tareas.Remove(tarea);
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+
+            return NoContent();
         }
 
         private bool TareaExists(int id)
